@@ -1,4 +1,6 @@
 import json
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 
 class Task:
     def __init__(self, description, completed=False):
@@ -24,28 +26,18 @@ class TaskManager:
     def add_task(self, description):
         new_task = Task(description)
         self.tasks.append(new_task)
-        print(f"Tarea '{description}' agregada.")
         self.save_tasks()
 
     def mark_task_as_completed(self, position):
         try:
             self.tasks[position].completed = True
-            print(f"Tarea '{self.tasks[position].description}' marcada como completada.")
             self.save_tasks()
         except IndexError:
             print("Error: posición de tarea no válida.")
 
-    def show_all_tasks(self):
-        if not self.tasks:
-            print("No hay tareas en la lista.")
-        else:
-            for idx, task in enumerate(self.tasks):
-                print(f"{idx}. {task}")
-
     def delete_task(self, position):
         try:
-            removed_task = self.tasks.pop(position)
-            print(f"Tarea '{removed_task.description}' eliminada.")
+            self.tasks.pop(position)
             self.save_tasks()
         except IndexError:
             print("Error: posición de tarea no válida.")
@@ -54,7 +46,6 @@ class TaskManager:
         with open(self.filename, 'w') as file:
             tasks_dict = [task.to_dict() for task in self.tasks]
             json.dump(tasks_dict, file, indent=4)
-        print("Tareas guardadas en el archivo.")
 
     def load_tasks(self):
         try:
@@ -64,45 +55,66 @@ class TaskManager:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
+class TaskApp:
+    def __init__(self, root, task_manager):
+        self.root = root
+        self.root.title("Task Manager")
+        self.task_manager = task_manager
+
+        self.frame = tk.Frame(root)
+        self.frame.pack(pady=10)
+
+        self.task_listbox = tk.Listbox(self.frame, width=50, height=10)
+        self.task_listbox.pack(side=tk.LEFT, padx=10)
+        self.update_task_listbox()
+
+        self.scrollbar = tk.Scrollbar(self.frame, orient=tk.VERTICAL)
+        self.scrollbar.config(command=self.task_listbox.yview)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.task_listbox.config(yscrollcommand=self.scrollbar.set)
+
+        self.add_button = tk.Button(root, text="Agregar Tarea", command=self.add_task)
+        self.add_button.pack(pady=5)
+
+        self.complete_button = tk.Button(root, text="Marcar como Completada", command=self.complete_task)
+        self.complete_button.pack(pady=5)
+
+        self.delete_button = tk.Button(root, text="Eliminar Tarea", command=self.delete_task)
+        self.delete_button.pack(pady=5)
+
+    def update_task_listbox(self):
+        self.task_listbox.delete(0, tk.END)
+        for idx, task in enumerate(self.task_manager.tasks):
+            self.task_listbox.insert(tk.END, f"{idx}. {task}")
+
+    def add_task(self):
+        description = simpledialog.askstring("Agregar Tarea", "Describe la nueva tarea:")
+        if description:
+            self.task_manager.add_task(description)
+            self.update_task_listbox()
+
+    def complete_task(self):
+        try:
+            selected_index = self.task_listbox.curselection()[0]
+            self.task_manager.mark_task_as_completed(selected_index)
+            self.update_task_listbox()
+        except IndexError:
+            messagebox.showerror("Error", "Por favor selecciona una tarea.")
+
+    def delete_task(self):
+        try:
+            selected_index = self.task_listbox.curselection()[0]
+            self.task_manager.delete_task(selected_index)
+            self.update_task_listbox()
+        except IndexError:
+            messagebox.showerror("Error", "Por favor selecciona una tarea.")
+
 def main():
     task_manager = TaskManager()
-
-    while True:
-        print("\nOpciones:")
-        print("1. Agregar una nueva tarea")
-        print("2. Marcar una tarea como completada")
-        print("3. Mostrar todas las tareas")
-        print("4. Eliminar una tarea")
-        print("5. Salir")
-        
-        try:
-            option = int(input("Selecciona una opción: "))
-        except ValueError:
-            print("Error: por favor ingresa un número válido.")
-            continue
-
-        if option == 1:
-            description = input("Describe la nueva tarea: ")
-            task_manager.add_task(description)
-        elif option == 2:
-            try:
-                position = int(input("Ingresa la posición de la tarea a marcar como completada: "))
-                task_manager.mark_task_as_completed(position)
-            except ValueError:
-                print("Error: por favor ingresa un número válido.")
-        elif option == 3:
-            task_manager.show_all_tasks()
-        elif option == 4:
-            try:
-                position = int(input("Ingresa la posición de la tarea a eliminar: "))
-                task_manager.delete_task(position)
-            except ValueError:
-                print("Error: por favor ingresa un número válido.")
-        elif option == 5:
-            print("Saliendo del programa. ¡Adiós!")
-            break
-        else:
-            print("Error: opción no válida. Por favor, intenta de nuevo.")
+    root = tk.Tk()
+    app = TaskApp(root, task_manager)
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
