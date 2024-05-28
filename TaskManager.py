@@ -1,25 +1,37 @@
+import json
+
 class Task:
-    def __init__(self, description):
+    def __init__(self, description, completed=False):
         self.description = description
-        self.completed = False
+        self.completed = completed
 
     def __str__(self):
         status = "Completada" if self.completed else "Pendiente"
         return f"{self.description} - {status}"
 
+    def to_dict(self):
+        return {"description": self.description, "completed": self.completed}
+
+    @classmethod
+    def from_dict(cls, task_dict):
+        return cls(task_dict["description"], task_dict["completed"])
+
 class TaskManager:
-    def __init__(self):
-        self.tasks = []
+    def __init__(self, filename="tasks.json"):
+        self.filename = filename
+        self.tasks = self.load_tasks()
 
     def add_task(self, description):
         new_task = Task(description)
         self.tasks.append(new_task)
         print(f"Tarea '{description}' agregada.")
+        self.save_tasks()
 
     def mark_task_as_completed(self, position):
         try:
             self.tasks[position].completed = True
             print(f"Tarea '{self.tasks[position].description}' marcada como completada.")
+            self.save_tasks()
         except IndexError:
             print("Error: posición de tarea no válida.")
 
@@ -34,8 +46,23 @@ class TaskManager:
         try:
             removed_task = self.tasks.pop(position)
             print(f"Tarea '{removed_task.description}' eliminada.")
+            self.save_tasks()
         except IndexError:
             print("Error: posición de tarea no válida.")
+
+    def save_tasks(self):
+        with open(self.filename, 'w') as file:
+            tasks_dict = [task.to_dict() for task in self.tasks]
+            json.dump(tasks_dict, file, indent=4)
+        print("Tareas guardadas en el archivo.")
+
+    def load_tasks(self):
+        try:
+            with open(self.filename, 'r') as file:
+                tasks_dict = json.load(file)
+                return [Task.from_dict(task) for task in tasks_dict]
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
 
 def main():
     task_manager = TaskManager()
