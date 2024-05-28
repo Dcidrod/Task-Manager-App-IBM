@@ -1,6 +1,32 @@
 [
     {
-        "description": "ads",
-        "completed": true
+        "description": "Desayunar",
+        "completed": true,
+        "task_id": 1
+    },
+    {
+        "description": "Ducharse",
+        "completed": true,
+        "task_id": 3
+    },
+    {
+        "description": "Salir a comprar",
+        "completed": false,
+        "task_id": 4
+    },
+    {
+        "description": "Hacer la comida",
+        "completed": true,
+        "task_id": 5
+    },
+    {
+        "description": "Comer",
+        "completed": false,
+        "task_id": 6
+    },
+    {
+        "description": "Recojer paquete de correos",
+        "completed": false,
+        "task_id": 7
     }
 ]
